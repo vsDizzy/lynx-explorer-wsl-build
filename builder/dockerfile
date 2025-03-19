@@ -1,0 +1,49 @@
+FROM ubuntu:24.04
+SHELL ["/bin/bash", "-c"]
+RUN apt update && \
+    apt install -y \
+      wget \
+      curl \
+      unzip \
+      git \
+      python3 \
+      python3-pip \
+      python3-venv \
+      openjdk-11-jdk
+
+WORKDIR /root
+RUN python3 -m venv venv
+RUN source venv/bin/activate && \
+    pip3 install pyyaml
+
+ARG LYNX_SRC_URL=https://github.com/lynx-family/lynx.git
+RUN git clone $LYNX_SRC_URL src/lynx
+
+ENV ANDROID_HOME=/android
+
+RUN git config --global http.version HTTP/1.1 && \
+    git config --global http.postBuffer 1524288000 && \
+    git config --global pack.window 1
+
+RUN source venv/bin/activate && \
+    cd src/lynx && \
+    source tools/envsetup.sh && \
+    tools/hab sync .
+
+RUN source venv/bin/activate && \
+    cd src/lynx && \
+    source tools/envsetup.sh && \
+    yes | source tools/android_tools/prepare_android_build.sh
+
+RUN source venv/bin/activate && \
+    cd src/lynx && \
+    source tools/envsetup.sh && \
+    source tools/android_tools/prepare_android_build.sh && \
+    cd explorer/android && \
+    # ./gradlew :LynxExplorer:assembleNoAsanDebug --no-daemon -PabiList=armeabi-v7a,x86,x86_64,arm64-v8a
+    ./gradlew :LynxExplorer:assembleNoAsanDebug --no-daemon -PabiList=x86_64
+
+RUN ln src/lynx/explorer/android/lynx_explorer/build/outputs/apk/noasan/debug/LynxExplorer-noasan-debug.apk lynx-explorer.apk
+
+# The output will be
+# /root/lynx-explorer.apk

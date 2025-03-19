@@ -1,0 +1,15 @@
+services:
+  builder:
+    tty: true
+    build: builder
+    devices: ["/dev/kvm", "/dev/dxg"]
+    environment:
+      - DISPLAY=$DISPLAY
+      - WAYLAND_DISPLAY=$WAYLAND_DISPLAY
+      - XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
+      - PULSE_SERVER=$PULSE_SERVER
+      - LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg:/mnt/wslg
+      - /usr/lib/wsl:/usr/lib/wsl
